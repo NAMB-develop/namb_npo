@@ -1,0 +1,12 @@
+<string name="url_featured">http://apps-api.uitzendinggemist.nl/tips.json</string>
+<string name="url_recent">http://apps-api.uitzendinggemist.nl/broadcasts/recent.json</string>
+<string name="url_recent_day">http://apps-api.uitzendinggemist.nl/broadcasts/%s.json</string>
+<string name="url_popular">http://apps-api.uitzendinggemist.nl/episodes/popular.json</string>
+<string name="url_index">http://apps-api.uitzendinggemist.nl/series.json</string>
+<string name="url_latest_episode">http://apps-api.uitzendinggemist.nl/episodes/series/%s/latest.json</string>
+<string name="url_series_episodes">http://apps-api.uitzendinggemist.nl/series/%s.json</string>
+<string name="url_broadcaster_episodes">http://apps-api.uitzendinggemist.nl/episodes/broadcaster/%s.json</string>
+<string name="url_genre_episodes">http://apps-api.uitzendinggemist.nl/episodes/genre/%s.json</string>
+<string name="url_single_episode">http://apps-api.uitzendinggemist.nl/episodes/%s.json</string>
+<string name="url_search">http://apps-api.uitzendinggemist.nl/episodes/search/%s.json</string>
+<string name="url_post_view">http://apps-api.uitzendinggemist.nl/episodes/%s/view.json</string>
