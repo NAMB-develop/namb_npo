@@ -4,7 +4,7 @@ import json as J
 def json_request(url):
     request = U.urlopen(url)
     response=request.read()
-    return J.loads(reponse)
+    return J.loads(response)
 
 def search(term):
     return json_request("http://apps-api.uitzendinggemist.nl/episodes/search/%s.json" % (term))
@@ -39,8 +39,12 @@ def genre(genre):
 def episode(episode_code):
     return json_request("http://apps-api.uitzendinggemist.nl/episodes/%s.json" % (episode_code))
 
+def load_recent():
+    global RECENT
+    RECENT=recent()
+
 #Unknown
-"http://apps-api.uitzendinggemist.nl/episodes/%s/view.json"
+#"http://apps-api.uitzendinggemist.nl/episodes/%s/view.json"
 
 
         
