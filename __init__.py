@@ -1,4 +1,5 @@
 plugin=None
+vlc=None
 import Tkinter as tkint
 
 def seconds_to_hms(seconds):
@@ -69,7 +70,7 @@ class Results(object):
     def clear(self):
         for i in self.items:
             #i.delete("all")
-            i.destroy()
+            i[0].destroy()
         self.items=[]
         self.at=0
 
@@ -95,7 +96,7 @@ class Results(object):
             else:
                 qq=""+q[i]
         item_broadcaster="(%s)"%qq
-        return item_title, item_desc, item_broadcaster
+        return item_title, item_desc, item_broadcaster, serie['nebo_id']
 
     def process_episode(self, episode):
         import time
@@ -123,7 +124,7 @@ class Results(object):
         s=episode['episode']['duration']
         item_duration=seconds_to_hms(s)
 
-        return item_title, item_date, item_duration
+        return item_title, item_date, item_duration, episode['episode']['nebo_id']
 
     def populate_tips(self, items):
         self.populate_episodes(items)
@@ -135,7 +136,7 @@ class Results(object):
 
 
         def add_item(item, position):
-            item_title, item_desc, item_broadcaster=self.process_serie(item)
+            item_title, item_desc, item_broadcaster, series_code=self.process_serie(item)
 
             c=tkint.Canvas(self.frame, bg="#5f5f5f" if i%2==0 else "#4f4f4f", highlightthickness=0)
             c.place(x=0,y=position*self.itemh, width=self.itemw, height=self.itemh)
@@ -146,7 +147,7 @@ class Results(object):
 
 
             
-            self.items.append(c)
+            self.items.append((c, series_code))
 
         for i in range(len(items)):
             add_item(items[i], i)        
@@ -159,7 +160,7 @@ class Results(object):
         import time
 
         def add_item(item, position):
-            item_title, item_date, item_duration = self.process_episode(item)
+            item_title, item_date, item_duration, item_code = self.process_episode(item)
             
             c=tkint.Canvas(self.frame, bg="#3f3f3f" if i%2==0 else "#5f5f5f", highlightthickness=0)
             c.place(x=0,y=position*self.itemh, width=self.itemw, height=self.itemh)
@@ -168,7 +169,7 @@ class Results(object):
             #cdur=c.create_text(self.w/100, (3*h)/4, anchor=tkint.W, text=item_duration, fill="white", font=("Verdana", 14), tags="duration")
             cbroad=c.create_text(99*self.w/100, (3*self.itemh)/4, anchor=tkint.E, text=item_date, fill="#cfcfcf", font=("Verdana", 10), tags="broadcasted")
 
-            self.items.append(c)
+            self.items.append((c, item_code))
 
             
 
@@ -176,14 +177,14 @@ class Results(object):
             add_item(items[i], i)
 
     def activate(self, item):
-        self.items[item].config(bg="#9f9f9f")
-        self.items[item].itemconfig("desc",fill="white")
-        self.items[item].itemconfig("broadcasted",fill="white")
+        self.items[item][0].config(bg="#9f9f9f")
+        self.items[item][0].itemconfig("desc",fill="white")
+        self.items[item][0].itemconfig("broadcasted",fill="white")
 
     def deactivate(self, item):
-        self.items[item].config(bg="#5f5f5f" if item%2==0 else "#4f4f4f")
-        self.items[item].itemconfig("desc",fill="#cfcfcf")
-        self.items[item].itemconfig("broadcasted",fill="#cfcfcf")
+        self.items[item][0].config(bg="#5f5f5f" if item%2==0 else "#4f4f4f")
+        self.items[item][0].itemconfig("desc",fill="#cfcfcf")
+        self.items[item][0].itemconfig("broadcasted",fill="#cfcfcf")
 
     def update(self, posneg):
         prev=self.at
@@ -197,14 +198,68 @@ class Results(object):
         if p+self.at<0 or p+self.at==len(self.items):
             return
 
-        if self.items[p+self.at].winfo_y()+self.frame.winfo_y()>self.h-self.itemh or self.items[p+self.at].winfo_y()+self.frame.winfo_y()<self.itemoffset:
+        if self.items[p+self.at][0].winfo_y()+self.frame.winfo_y()>self.h-self.itemh or self.items[p+self.at][0].winfo_y()+self.frame.winfo_y()<self.itemoffset:
             offset=posneg*self.itemh*-1
             self.frame.place(y=self.frame.winfo_y()+offset)
 
         self.update(p)
 
+    def start_episode(self, at):
+        code=self.items[self.at][1]
+        instance=vlc.get_default_instance()
+        player=instance.media_player_new()
+        extensions.load_extension("youtube_dl")
+        youtube_dl=extensions.get_extension("youtube_dl")
+        #a=youtube_dl.YoutubeDL._write_string
+        #result=""
+        #def b(self, s, out=None):
+            #result=result+s
+        #youtube_dl.YoutubeDL._write_string=b
+        #youtube_dl.main(["-j","http://www.npo.nl/mumble-mumble/01-01-1970/%s"%code])
+        #youtube_dl.YoutubeDL._write_string=a
+        
+        import StringIO, sys
+        ss=StringIO.StringIO()
+
+        orig=youtube_dl.YoutubeDL.to_stdout
+        orig_ex=sys.exit
+        
+        def sub(self, message, skip_eol=False, check_quiet=False):
+            if not check_quiet:
+                ss.write(message)
+
+        def sub_ex(i):
+            pass
+            
+        youtube_dl.YoutubeDL.to_stdout=sub
+        sys.exit=sub_ex
+        youtube_dl._real_main(["-j","http://www.npo.nl/mumble/01-01-1970/%s"%code,"--quiet"])
+        youtube_dl.YoutubeDL.to_stdout=orig
+        sys.exit=orig_ex
+
+        ss.seek(0)
+        global res
+        res=ss.read()
+        
+        import json
+        result=json.loads(res)
+        #print(result)
+        best={'quality':0}
+        for form in result['formats']:
+            if 'quality' in form:
+                best=best if form['quality'] < best['quality'] else form
+        #print(best["url"])
+        media=instance.media_new(best["url"])
+        media.add_option(':fullscreen')
+        player.set_media(media)
+        global player
+        player.set_fullscreen(True)
+        player.play()
+        self.frame.focus()
+
     def select(self):
-        pass
+        self.start_episode(self.at)
+            
 
 class Tabs(object):
 
@@ -321,6 +376,8 @@ if __name__=="__main__":
 
     import extensions
     extensions.load_extension("vlc")
+    global vlc
+    vlc=extensions.get_extension("vlc")
 
     global root
     
