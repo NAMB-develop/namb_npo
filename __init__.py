@@ -1,5 +1,3 @@
-plugin=None
-vlc=None
 import Tkinter as tkint
 
 def seconds_to_hms(seconds):
@@ -204,58 +202,160 @@ class Results(object):
 
         self.update(p)
 
+    class A(object):
+
+        def __init__(self):
+            self.loaded_instance=False
+            self.loaded_player=False
+            self.loaded_youtube_dl=False
+            self.instance=None
+            self.player=None
+            self.youtube_dl=None
+
+        def routine(self):
+            if not self.loaded_instance:
+                self.load_instance()
+                return
+            if not self.loaded_player:
+                self.load_player()
+                return
+            if not self.loaded_youtube_dl:
+                self.load_youtube_dl()
+                return
+
+        def load_player(self):
+
+            def loop(check, get):
+                print("Looping animation...")
+                mess=loop.mess+"."
+                for i in range(loop.i):
+                    mess=mess+"."
+                    
+                loop.i=loop.i+1 if loop.i<2 else loop.i=0
+                loop.fr.set_message(mess)
+                
+                if check():
+                    loop.fr.set_message(mess)
+                    self.parent.after(10, lambda: loop(check, get))
+                else:
+                    self.player=get()
+                    loop.fr.frame.destroy()
+                    self.loaded_instance=True
+                    self.routine()          
+
+            import namb.gui.util
+            loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
+            loop.i=0
+            loop.mess="Generating vlc player"
+
+            import namb.util
+            namb.util.call_while_waiting_for(loop, self.instance.media_player_new)            
+            
+
+        def load_instance(self):
+            def loop(check, get):
+                print("Looping animation...")
+                mess=loop.mess+"."
+                for i in range(loop.i):
+                    mess=mess+"."
+                    
+                loop.i=loop.i+1 if loop.i<2 else loop.i=0
+                loop.fr.set_message(mess)
+                
+                if check():
+                    loop.fr.set_message(mess)
+                    self.parent.after(10, lambda: loop(check, get))
+                else:
+                    self.instance=get()
+                    loop.fr.frame.destroy()
+                    self.loaded_instance=True
+                    self.routine()
+            
+            import namb.gui.util
+            loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
+            loop.i=0
+            loop.mess="Generating vlc instance"
+
+            import namb.util
+            namb.util.call_while_waiting_for(loop, vlc.get_default_instance)
+
+        def load_youtube_dl(self):
+
+            def loop(check, get):
+                print("Looping animation...")
+                mess=loop.mess+"."
+                for i in range(loop.i):
+                    mess=mess+"."
+                    
+                loop.i=loop.i+1 if loop.i<2 else loop.i=0
+                loop.fr.set_message(mess)
+                
+                if check():
+                    loop.fr.set_message(mess)
+                    self.parent.after(10, lambda: loop(check, get))
+                else:
+                    self.youtube_dl=get()
+                    self.youtube_dl=extensions.get_extension("youtube_dl")
+                    loop.fr.frame.destroy()
+                    self.loaded_instance=True
+                    self.routine()
+
+            import namb.gui.util
+            loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
+            loop.i=0
+            loop.mess="Loading youtube_dl"
+
+            import namb.util
+            namb.util.call_while_waiting_for(loop, extensions.load_extension, "youtube_dl")
+
     def start_episode(self, at):
         code=self.items[self.at][1]
-        instance=vlc.get_default_instance()
-        player=instance.media_player_new()
-        extensions.load_extension("youtube_dl")
-        youtube_dl=extensions.get_extension("youtube_dl")
-        #a=youtube_dl.YoutubeDL._write_string
-        #result=""
-        #def b(self, s, out=None):
-            #result=result+s
-        #youtube_dl.YoutubeDL._write_string=b
-        #youtube_dl.main(["-j","http://www.npo.nl/mumble-mumble/01-01-1970/%s"%code])
-        #youtube_dl.YoutubeDL._write_string=a
-        
-        import StringIO, sys
-        ss=StringIO.StringIO()
+        print("Generating vlc stuff")
 
-        orig=youtube_dl.YoutubeDL.to_stdout
-        orig_ex=sys.exit
-        
-        def sub(self, message, skip_eol=False, check_quiet=False):
-            if not check_quiet:
-                ss.write(message)
+        a=A()
 
-        def sub_ex(i):
-            pass
+        a.routine()
+
+        def cont():
             
-        youtube_dl.YoutubeDL.to_stdout=sub
-        sys.exit=sub_ex
-        youtube_dl._real_main(["-j","http://www.npo.nl/mumble/01-01-1970/%s"%code,"--quiet"])
-        youtube_dl.YoutubeDL.to_stdout=orig
-        sys.exit=orig_ex
+            global player
+            player=instance[0].media_player_new()
+            extensions.load_extension("youtube_dl")
+            youtube_dl=extensions.get_extension("youtube_dl")
+            
+            print("Calling youtube_dl")
+            ydl=youtube_dl.YoutubeDL({'forcejson':True, 'skip_download':True, 'quiet':True})
+            url="http://www.npo.nl/mumble/01-01-1970/%s"%code
 
-        ss.seek(0)
-        global res
-        res=ss.read()
-        
-        import json
-        result=json.loads(res)
-        #print(result)
-        best={'quality':0}
-        for form in result['formats']:
-            if 'quality' in form:
-                best=best if form['quality'] < best['quality'] else form
-        #print(best["url"])
-        media=instance.media_new(best["url"])
-        media.add_option(':fullscreen')
-        player.set_media(media)
-        global player
-        player.set_fullscreen(True)
-        player.play()
-        self.frame.focus()
+            try:
+                ret = ydl.extract_info(url, force_generic_extractor=False)
+            except Exception, e:
+                print(e)
+                return
+
+            result=ret
+            best={'quality':0}
+            for form in result['formats']:
+                if 'quality' in form:
+                    best=best if form['quality'] < best['quality'] else form
+            #print(best["url"])
+            print("Generating media")
+            media=instance[0].media_new(best["url"])
+            
+            if best.get("subtitles"):
+                import namb.network
+                u=namb.network.U.urlopen(best['subtitles'])
+                sub=u.read()
+                u.close()
+                import tempfile
+                t=tempfile.TemporaryFile()
+                t.write(sub)
+                print(vlc.libvlc_video_set_subtitle_file(player, t.name))
+                    
+            player.set_media(media)
+            #player.set_fullscreen(True)
+            player.play()
+            #self.frame.focus()
 
     def select(self):
         self.start_episode(self.at)
