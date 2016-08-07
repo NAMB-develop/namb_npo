@@ -202,119 +202,108 @@ class Results(object):
 
         self.update(p)
 
-    class A(object):
+    def routine(self):
+        if not hasattr(self, "loaded_instance") or not self.loaded_instance:
+            self.load_instance()
+            return False
+        if not hasattr(self, "loaded_player") or not self.loaded_player:
+            self.load_player()
+            return False
+        if not hasattr(self, "loaded_youtube_dl") or not self.loaded_youtube_dl:
+            self.load_youtube_dl()
+            return False
 
-        def __init__(self):
-            self.loaded_instance=False
-            self.loaded_player=False
-            self.loaded_youtube_dl=False
-            self.instance=None
-            self.player=None
-            self.youtube_dl=None
+    def load_player(self):
 
-        def routine(self):
-            if not self.loaded_instance:
-                self.load_instance()
-                return
-            if not self.loaded_player:
-                self.load_player()
-                return
-            if not self.loaded_youtube_dl:
-                self.load_youtube_dl()
-                return
-
-        def load_player(self):
-
-            def loop(check, get):
-                print("Looping animation...")
-                mess=loop.mess+"."
-                for i in range(loop.i):
-                    mess=mess+"."
-                    
-                loop.i=loop.i+1 if loop.i<2 else loop.i=0
-                loop.fr.set_message(mess)
+        def loop(check, get):
+            print("Looping animation...")
+            mess=loop.mess+"."
+            for i in range(loop.i):
+                mess=mess+"."
                 
-                if check():
-                    loop.fr.set_message(mess)
-                    self.parent.after(10, lambda: loop(check, get))
-                else:
-                    self.player=get()
-                    loop.fr.frame.destroy()
-                    self.loaded_instance=True
-                    self.routine()          
-
-            import namb.gui.util
-            loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
-            loop.i=0
-            loop.mess="Generating vlc player"
-
-            import namb.util
-            namb.util.call_while_waiting_for(loop, self.instance.media_player_new)            
+            loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            loop.fr.set_message(mess)
             
-
-        def load_instance(self):
-            def loop(check, get):
-                print("Looping animation...")
-                mess=loop.mess+"."
-                for i in range(loop.i):
-                    mess=mess+"."
-                    
-                loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            if check():
                 loop.fr.set_message(mess)
+                self.parent.after(10, lambda: loop(check, get))
+            else:
+                self.player=get()
+                loop.fr.frame.destroy()
+                self.loaded_instance=True
+                self.routine()          
+
+        import namb.gui.util
+        loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
+        loop.i=0
+        loop.mess="Generating vlc player"
+
+        import namb.util
+        namb.util.call_while_waiting_for(loop, self.instance.media_player_new)            
+        
+
+    def load_instance(self):
+        def loop(check, get):
+            print("Looping animation...")
+            mess=loop.mess+"."
+            for i in range(loop.i):
+                mess=mess+"."
                 
-                if check():
-                    loop.fr.set_message(mess)
-                    self.parent.after(10, lambda: loop(check, get))
-                else:
-                    self.instance=get()
-                    loop.fr.frame.destroy()
-                    self.loaded_instance=True
-                    self.routine()
+            loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            loop.fr.set_message(mess)
             
-            import namb.gui.util
-            loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
-            loop.i=0
-            loop.mess="Generating vlc instance"
-
-            import namb.util
-            namb.util.call_while_waiting_for(loop, vlc.get_default_instance)
-
-        def load_youtube_dl(self):
-
-            def loop(check, get):
-                print("Looping animation...")
-                mess=loop.mess+"."
-                for i in range(loop.i):
-                    mess=mess+"."
-                    
-                loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            if check():
                 loop.fr.set_message(mess)
+                self.parent.after(10, lambda: loop(check, get))
+            else:
+                self.instance=get()
+                loop.fr.frame.destroy()
+                self.loaded_instance=True
+                self.routine()
+        
+        import namb.gui.util
+        loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
+        loop.i=0
+        loop.mess="Generating vlc instance"
+
+        import namb.util
+        namb.util.call_while_waiting_for(loop, vlc.get_default_instance)
+
+    def load_youtube_dl(self):
+
+        def loop(check, get):
+            print("Looping animation...")
+            mess=loop.mess+"."
+            for i in range(loop.i):
+                mess=mess+"."
                 
-                if check():
-                    loop.fr.set_message(mess)
-                    self.parent.after(10, lambda: loop(check, get))
-                else:
-                    self.youtube_dl=get()
-                    self.youtube_dl=extensions.get_extension("youtube_dl")
-                    loop.fr.frame.destroy()
-                    self.loaded_instance=True
-                    self.routine()
+            loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            loop.fr.set_message(mess)
+            
+            if check():
+                loop.fr.set_message(mess)
+                self.parent.after(10, lambda: loop(check, get))
+            else:
+                self.youtube_dl=get()
+                self.youtube_dl=extensions.get_extension("youtube_dl")
+                loop.fr.frame.destroy()
+                self.loaded_instance=True
+                self.routine()
 
-            import namb.gui.util
-            loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
-            loop.i=0
-            loop.mess="Loading youtube_dl"
+        import namb.gui.util
+        loop.fr=namb.gui.util.DebugLoadingScreen(self.parent)
+        loop.i=0
+        loop.mess="Loading youtube_dl"
 
-            import namb.util
-            namb.util.call_while_waiting_for(loop, extensions.load_extension, "youtube_dl")
+        import namb.util
+        namb.util.call_while_waiting_for(loop, extensions.load_extension, "youtube_dl")
 
     def start_episode(self, at):
         code=self.items[self.at][1]
         print("Generating vlc stuff")
 
-        a=A()
 
-        a.routine()
+        
 
         def cont():
             
@@ -451,7 +440,13 @@ class Main(object):
 def init():
     global plugin
     import plugin
-    plugin.load_recent()
+    import extensions
+    extensions.load_extension("vlc")
+    global vlc
+    vlc=extensions.get_extension("vlc")
+
+    global root
+
 
 def display(parent, geom=(1280,720)):
     global width
@@ -473,11 +468,11 @@ def ui_loop():
 if __name__=="__main__":
     import sys, os
     sys.path.insert(0, os.path.join("..","..",".."))
-
-    import extensions
-    extensions.load_extension("vlc")
-    global vlc
-    vlc=extensions.get_extension("vlc")
+##
+##    import extensions
+##    extensions.load_extension("vlc")
+##    global vlc
+##    vlc=extensions.get_extension("vlc")
 
     global root
     
