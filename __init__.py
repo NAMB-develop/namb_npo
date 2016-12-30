@@ -221,7 +221,11 @@ class Results(object):
             for i in range(loop.i):
                 mess=mess+"."
                 
-            loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            if loop.i<2:
+                loop.i=loop.i+1
+            else:
+                loop.i=0
+            #loop.i=loop.i+1 if loop.i<2 else loop.i=0
             loop.fr.set_message(mess)
             
             if check():
@@ -249,7 +253,10 @@ class Results(object):
             for i in range(loop.i):
                 mess=mess+"."
                 
-            loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            if loop.i<2:
+                loop.i=loop.i+1
+            else:
+                loop.i=0
             loop.fr.set_message(mess)
             
             if check():
@@ -277,7 +284,10 @@ class Results(object):
             for i in range(loop.i):
                 mess=mess+"."
                 
-            loop.i=loop.i+1 if loop.i<2 else loop.i=0
+            if loop.i<2:
+                loop.i=loop.i+1
+            else:
+                loop.i=0
             loop.fr.set_message(mess)
             
             if check():
